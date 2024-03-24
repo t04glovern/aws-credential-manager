@@ -35,7 +35,7 @@ function App() {
         try {
           const details = await invoke("get_aws_profile_details", { profile: selectedProfile });
           const { access_key_id, secret_access_key, session_token } = details as any;
-  
+
           setProfileName(selectedProfile);
           setAccessKeyId(access_key_id);
           setSecretAccessKey(secret_access_key);
@@ -45,7 +45,7 @@ function App() {
         }
       }
     };
-  
+
     fetchProfileDetails();
   }, [selectedProfile]);
 
@@ -93,71 +93,77 @@ function App() {
   };
 
   return (
-    <div className="container">
-      <h1>Welcome to AWS Credential Checker!</h1>
-
+    <div className="container mx-auto px-4">
+      <h1 className="text-3xl font-bold my-4 text-primary">AWS Credential Checker</h1>
+  
       {/* AWS Profile Selection and Identity Check */}
-      <div>
-        <label htmlFor="profile-select">Select AWS Profile:</label>
+      <div className="flex flex-col md:flex-row justify-between items-center mb-4 space-y-2 md:space-y-0 md:space-x-2">
         <select
           id="profile-select"
+          className="form-select mt-1 block w-full border-neutral rounded-md shadow-sm h-12"
           value={selectedProfile}
           onChange={(e) => setSelectedProfile(e.target.value)}
           disabled={awsProfiles.length === 0}
         >
-          <option value="">--Please choose an AWS profile--</option>
+          <option value="">-- Select AWS profile --</option>
           {awsProfiles.map((profile) => (
             <option key={profile} value={profile}>{profile}</option>
           ))}
         </select>
-        <button onClick={checkIdentity} disabled={!selectedProfile}>Check Identity</button>
-        <button onClick={handleDeleteProfile} disabled={!selectedProfile}>Delete Profile</button>
+        <button className="bg-primary hover:bg-secondary text-white font-bold py-2 px-4 rounded w-full md:w-1/4 h-12" onClick={checkIdentity} disabled={!selectedProfile}>Check</button>
+        <button className="bg-success hover:bg-warning text-white font-bold py-2 px-4 rounded w-full md:w-1/4 h-12" onClick={handleDeleteProfile} disabled={!selectedProfile}>Delete</button>
       </div>
-
+  
       {/* AWS Identity Information Display */}
-      <div>
-        <h2>Identity Information:</h2>
-        <textarea
-          value={identityInfo}
-          readOnly
-          rows={10}
-          cols={50}
-          style={{ resize: "none" }}
-        ></textarea>
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4 text-primary">Identity Information:</h2>
+        <div className="w-full p-3 border-neutral rounded-md shadow-sm resize-none h-36 bg-gray-100 text-gray-600">
+          {identityInfo || <span className="italic">No identity information available.</span>}
+        </div>
       </div>
-
+  
       {/* Form for Adding/Editing AWS Profiles */}
       <div>
-        <h2>{selectedProfile ? "Edit" : "Add"} AWS Profile:</h2>
-        {!selectedProfile && (
+        <h2 className="text-2xl font-semibold mb-4 text-primary">{selectedProfile ? "Edit" : "Add"} AWS Profile:</h2>
+        <div className="flex flex-col space-y-4">
+          {!selectedProfile && (
+            <input
+              type="text"
+              placeholder="Profile Name"
+              className="form-input mt-1 block w-full pl-3 py-2 border-neutral rounded-md shadow-sm h-12"
+              value={profileName}
+              onChange={(e) => setProfileName(e.target.value)}
+            />
+          )}
           <input
             type="text"
-            placeholder="Profile Name"
-            value={profileName}
-            onChange={(e) => setProfileName(e.target.value)}
+            placeholder="Access Key ID"
+            className="form-input mt-1 block w-full pl-3 py-2 border-neutral rounded-md shadow-sm h-12"
+            value={accessKeyId}
+            onChange={(e) => setAccessKeyId(e.target.value)}
           />
-        )}
-        <input
-          type="text"
-          placeholder="Access Key ID"
-          value={accessKeyId}
-          onChange={(e) => setAccessKeyId(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Secret Access Key"
-          value={secretAccessKey}
-          onChange={(e) => setSecretAccessKey(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Session Token (Optional)"
-          value={sessionToken}
-          onChange={(e) => setSessionToken(e.target.value)}
-        />
-        <button onClick={handleAddOrEditProfile} disabled={!profileName || !accessKeyId || !secretAccessKey}>
-          {selectedProfile ? "Update" : "Add"} Profile
-        </button>
+          <input
+            type="password"
+            placeholder="Secret Access Key"
+            className="form-input mt-1 block w-full pl-3 py-2 border-neutral rounded-md shadow-sm h-12"
+            value={secretAccessKey}
+            onChange={(e) => setSecretAccessKey(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="Session Token (Optional)"
+            className="form-input mt-1 block w-full pl-3 py-2 border-neutral rounded-md shadow-sm h-12"
+            value={sessionToken}
+            onChange={(e) => setSessionToken(e.target.value)}
+          />
+          <button
+            onClick={handleAddOrEditProfile}
+            disabled={!profileName || !accessKeyId || !secretAccessKey}
+            className="bg-primary hover:bg-secondary text-white font-bold py-2 px-4 rounded w-full h-12"
+          >
+            {selectedProfile ? "Update" : "Add"} Profile
+          </button>
+        </div>
       </div>
     </div>
   );
