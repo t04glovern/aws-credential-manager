@@ -35,16 +35,16 @@ def iconize(icon_path, output_dir):
         '32x32': (32, 32),
         '128x128': (128, 128),
         '128x128@2x': (256, 256),
-        'Square30x30Logo': (30, 30),
-        'Square44x44Logo': (44, 44),
-        'Square71x71Logo': (71, 71),
-        'Square89x89Logo': (89, 89),
-        'Square107x107Logo': (107, 107),
-        'Square142x142Logo': (142, 142),
-        'Square150x150Logo': (150, 150),
-        'Square284x284Logo': (284, 284),
-        'Square310x310Logo': (310, 310),
-        'StoreLogo': (50, 50)
+        # 'Square30x30Logo': (30, 30),
+        # 'Square44x44Logo': (44, 44),
+        # 'Square71x71Logo': (71, 71),
+        # 'Square89x89Logo': (89, 89),
+        # 'Square107x107Logo': (107, 107),
+        # 'Square142x142Logo': (142, 142),
+        # 'Square150x150Logo': (150, 150),
+        # 'Square284x284Logo': (284, 284),
+        # 'Square310x310Logo': (310, 310),
+        # 'StoreLogo': (50, 50)
     }
 
     # List to store the paths of the generated icons
@@ -54,7 +54,7 @@ def iconize(icon_path, output_dir):
         resized_icon = icon_image.resize(size, Image.LANCZOS)
         resized_icon_path = os.path.join(output_dir, f'{name}.png')
         resized_icon.save(resized_icon_path)
-        icon_paths.append(resized_icon_path)
+        icon_paths.append(f'icons/{name}.png')
         try:
             icns.add_media(file=resized_icon_path)
         except IcnsType.CanNotDetermine as e:
@@ -67,7 +67,7 @@ def iconize(icon_path, output_dir):
     icns.write(icns_path)
 
     # Add ICNS and ICO paths
-    icon_paths.extend([icns_path, ico_path])
+    icon_paths.extend([f'icons/icon.icns', f'icons/icon.ico'])
 
     # Generate the icon block string
     icon_block = ',\n        '.join([f'"{path}"' for path in icon_paths])
