@@ -1,5 +1,5 @@
 [package]
-name = "AWS Credential Manager"
+name = "aws-credential-manager"
 version = "0.0.0"
 description = "An app to manage AWS credentials"
 authors = ["Nathan Glover"]
