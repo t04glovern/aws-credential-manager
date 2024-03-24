@@ -11,7 +11,6 @@ function App() {
   const [secretAccessKey, setSecretAccessKey] = useState<string>("");
   const [sessionToken, setSessionToken] = useState<string>("");
 
-  // Fetch AWS profiles when the component mounts
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
@@ -26,11 +25,28 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Reset the form fields when the selected profile changes
-    setProfileName(selectedProfile);
-    setAccessKeyId("");
-    setSecretAccessKey("");
-    setSessionToken("");
+    const fetchProfileDetails = async () => {
+      if (!selectedProfile) {
+        setProfileName("");
+        setAccessKeyId("");
+        setSecretAccessKey("");
+        setSessionToken("");
+      } else {
+        try {
+          const details = await invoke("get_aws_profile_details", { profile: selectedProfile });
+          const { access_key_id, secret_access_key, session_token } = details as any;
+  
+          setProfileName(selectedProfile);
+          setAccessKeyId(access_key_id);
+          setSecretAccessKey(secret_access_key);
+          setSessionToken(session_token || "");
+        } catch (error) {
+          console.error("Failed to fetch profile details:", error);
+        }
+      }
+    };
+  
+    fetchProfileDetails();
   }, [selectedProfile]);
 
   const checkIdentity = async () => {
@@ -50,17 +66,15 @@ function App() {
         secretAccessKey: secretAccessKey,
         sessionToken: sessionToken || undefined,
       };
-  
+
       await invoke("add_or_edit_aws_profile", { profile: profileData });
-  
+
       // Refresh the profiles list to include the newly added/updated profile
       const profiles = await invoke("list_aws_profiles");
       setAwsProfiles(profiles as string[]);
       setSelectedProfile(profileName); // Select the newly added/updated profile
-      alert('Profile updated successfully!');
     } catch (error) {
       console.error("Failed to add or edit AWS profile:", error);
-      alert('Failed to update profile.');
     }
   };
 
@@ -68,14 +82,12 @@ function App() {
     if (selectedProfile) {
       try {
         await invoke("delete_aws_profile", { profile: selectedProfile });
-        alert("Profile deleted successfully");
         // Refresh the profiles list
         const profiles = await invoke("list_aws_profiles");
         setAwsProfiles(profiles as string[]);
         setSelectedProfile("");
       } catch (error) {
         console.error("Failed to delete AWS profile:", error);
-        alert("Failed to delete profile");
       }
     }
   };
@@ -132,13 +144,13 @@ function App() {
           onChange={(e) => setAccessKeyId(e.target.value)}
         />
         <input
-          type="text"
+          type="password"
           placeholder="Secret Access Key"
           value={secretAccessKey}
           onChange={(e) => setSecretAccessKey(e.target.value)}
         />
         <input
-          type="text"
+          type="password"
           placeholder="Session Token (Optional)"
           value={sessionToken}
           onChange={(e) => setSessionToken(e.target.value)}

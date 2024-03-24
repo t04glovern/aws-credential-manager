@@ -6,7 +6,7 @@ use aws_config::profile::ProfileFileCredentialsProvider;
 use aws_sdk_sts::Client as StsClient;
 
 use ini::configparser::ini::Ini;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use std::{fs, path::Path, env};
 
@@ -31,6 +31,42 @@ fn list_aws_profiles() -> Result<Vec<String>, String> {
         .collect::<Vec<String>>();
 
     Ok(profiles)
+}
+
+#[derive(Serialize)]
+struct ProfileDetails {
+    access_key_id: String,
+    secret_access_key: String,
+    session_token: Option<String>,
+}
+
+#[tauri::command]
+fn get_aws_profile_details(profile: &str) -> Result<ProfileDetails, String> {
+    let home_dir = match std::env::var("HOME") {
+        Ok(dir) => dir,
+        Err(_) => return Err("Unable to find HOME directory".to_string()),
+    };
+
+    let credentials_path = Path::new(&home_dir).join(".aws/credentials");
+    let mut config = Ini::new();
+    if credentials_path.exists() {
+        match config.load(credentials_path.to_str().unwrap()) {
+            Ok(_) => (),
+            Err(e) => return Err(format!("Failed to load AWS credentials file: {}", e)),
+        }
+    }
+
+    let access_key_id = config.get(profile, "aws_access_key_id")
+        .ok_or_else(|| format!("Access Key ID not found for profile: {}", profile))?;
+    let secret_access_key = config.get(profile, "aws_secret_access_key")
+        .ok_or_else(|| format!("Secret Access Key not found for profile: {}", profile))?;
+    let session_token = config.get(profile, "aws_session_token"); // Session token is optional
+
+    Ok(ProfileDetails {
+        access_key_id: access_key_id.to_owned(),
+        secret_access_key: secret_access_key.to_owned(),
+        session_token: session_token.map(|s| s.to_owned()),
+    })
 }
 
 #[derive(Deserialize)]
@@ -147,6 +183,7 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             list_aws_profiles,
+            get_aws_profile_details,
             add_or_edit_aws_profile,
             delete_aws_profile,
             check_aws_identity
