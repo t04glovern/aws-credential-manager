@@ -6,7 +6,7 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "app",
+    "productName": "AWS Credential Manager",
     "version": "0.0.0"
   },
   "tauri": {
@@ -19,7 +19,7 @@
     },
     "windows": [
       {
-        "title": "AWS Credential Checker",
+        "title": "AWS Credential Manager",
         "width": 800,
         "height": 800
       }
@@ -30,7 +30,7 @@
     "bundle": {
       "active": true,
       "targets": "all",
-      "identifier": "com.devopstar.app",
+      "identifier": "com.devopstar.AwsCredentialManager",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",

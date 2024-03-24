@@ -94,8 +94,8 @@ function App() {
 
   return (
     <div className="container mx-auto px-4">
-      <h1 className="text-3xl font-bold my-4 text-primary">AWS Credential Checker</h1>
-  
+      <h1 className="text-3xl font-bold my-4 text-primary">AWS Credential Manager</h1>
+
       {/* AWS Profile Selection and Identity Check */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-4 space-y-2 md:space-y-0 md:space-x-2">
         <select
@@ -113,7 +113,7 @@ function App() {
         <button className="bg-primary hover:bg-secondary text-white font-bold py-2 px-4 rounded w-full md:w-1/4 h-12" onClick={checkIdentity} disabled={!selectedProfile}>Check</button>
         <button className="bg-success hover:bg-warning text-white font-bold py-2 px-4 rounded w-full md:w-1/4 h-12" onClick={handleDeleteProfile} disabled={!selectedProfile}>Delete</button>
       </div>
-  
+
       {/* AWS Identity Information Display */}
       <div className="mb-8">
         <h2 className="text-2xl font-semibold mb-4 text-primary">Identity Information:</h2>
@@ -121,7 +121,7 @@ function App() {
           {identityInfo || <span className="italic">No identity information available.</span>}
         </div>
       </div>
-  
+
       {/* Form for Adding/Editing AWS Profiles */}
       <div>
         <h2 className="text-2xl font-semibold mb-4 text-primary">{selectedProfile ? "Edit" : "Add"} AWS Profile:</h2>
