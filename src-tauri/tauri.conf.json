@@ -2,12 +2,12 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devPath": "../dist",
+    "devPath": "http://localhost:1420",
     "distDir": "../dist"
   },
   "package": {
     "productName": "aws-credential-manager",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "tauri": {
     "allowlist": {
@@ -26,6 +26,14 @@
     ],
     "security": {
       "csp": null
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/t04glovern/aws-credential-manager/releases/latest/download/latest.json"
+      ],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENFQTExQUJDRDEwOTMxODAKUldTQU1RblJ2QnFoenJtWjk2ejBwK0R1OHZ1NFhOanBscDRTbTdDTnNFb1NmamtSMnY4RlhJbFcK"
     },
     "bundle": {
       "active": true,

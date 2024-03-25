@@ -19,6 +19,29 @@ pip3 install pillow==10.2.0 icnsutil==1.1.0
 ./iconize.py --icon src-tauri/icons/icon.png --output src-tauri/icons
 ```
 
+## Generate Signing Key
+
+```bash
+npm run tauri signer generate -- -w aws-credential-manager.key
+```
+
+Add the contents of `~/.tauri/aws-credential-manager.key.pub` to your `tauri.conf.json`:
+
+```json
+...
+  "updater": {
+    "active": true,
+    "endpoints": [
+      "https://github.com/t04glovern/aws-credential-manager/releases/latest/download/latest.json"
+    ],
+    "dialog": true,
+    "pubkey": "<YOUR_PUBLIC_KEY>"
+  },
+...
+```
+
+> **IMPORTANT**: Add the contents of `aws-credential-manager.key` a ENV variable in GitHub Secrets called `TAURI_PRIVATE_KEY`.
+
 ## Development
 
 > **NOTE**: It is highly recommend, and more or less required for you to run `wslg` X Server on Windows: [https://github.com/microsoft/wslg](https://github.com/microsoft/wslg). This repository is setup to use `export DISPLAY=:0` so that you can view the app when working in a devcontainer.
@@ -41,5 +64,9 @@ npm run dev
 ## Build
 
 ```bash
+# Load in TAURI_PRIVATE_KEY for signing
+source env.sh
+
+# Build the app
 npm run tauri build
 ```

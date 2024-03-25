@@ -24,3 +24,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets
+aws-credential-manager.key
+aws-credential-manager.key.pub

@@ -13,7 +13,7 @@
       // change this to your `beforeDevCommand`:
       "command": "npm",
       "args": ["run", "dev"],
-      "problemMatcher": ["$tsc"]
+      "problemMatcher": "$tsc"
     },
     {
       "label": "ui:build",
