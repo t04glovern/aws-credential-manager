@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "aws-credential-manager",
-    "version": "1.0.1"
+    "version": "1.0.2"
   },
   "tauri": {
     "allowlist": {
@@ -15,6 +15,11 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "app": {
+        "all": true,
+        "show": true,
+        "hide": true
       }
     },
     "windows": [

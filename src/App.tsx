@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
+import { getVersion } from '@tauri-apps/api/app';
 import "./App.css";
 
 function App() {
@@ -10,6 +11,20 @@ function App() {
   const [accessKeyId, setAccessKeyId] = useState<string>("");
   const [secretAccessKey, setSecretAccessKey] = useState<string>("");
   const [sessionToken, setSessionToken] = useState<string>("");
+  const [tauriVersion, setTauriVersion] = useState<string>("");
+
+  useEffect(() => {
+    const fetchTauriVersion = async () => {
+      try {
+        const version = await getVersion();
+        setTauriVersion(version);
+      } catch (error) {
+        console.error("Failed to fetch Tauri version:", error);
+      }
+    };
+
+    fetchTauriVersion();
+  }, []);
 
   useEffect(() => {
     const fetchProfiles = async () => {
@@ -94,7 +109,7 @@ function App() {
 
   return (
     <div className="container mx-auto px-4">
-      <h1 className="text-3xl font-bold my-4 text-primary">AWS Credential Manager</h1>
+      <h1 className="text-3xl font-bold my-4 text-primary">AWS Credential Manager v{tauriVersion}</h1>
 
       {/* AWS Profile Selection and Identity Check */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-4 space-y-2 md:space-y-0 md:space-x-2">
