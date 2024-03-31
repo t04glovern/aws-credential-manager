@@ -45,6 +45,8 @@ Add the contents of `~/.tauri/aws-credential-manager.key.pub` to your `tauri.con
 ## Tests
 
 ```bash
+cargo install cargo-tarpaulin
+cargo test -- --test-threads=1
 cargo tarpaulin --out Lcov
 ```
 

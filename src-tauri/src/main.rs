@@ -8,8 +8,7 @@ use aws_sdk_sts::Client as StsClient;
 use ini::configparser::ini::Ini;
 use serde::{Deserialize, Serialize};
 
-use std::{fs, path::Path, env};
-use std::io::Read;
+use std::{env, fs, path::Path};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -182,7 +181,6 @@ async fn check_aws_identity(profile: &str) -> Result<String, String> {
 }
 
 fn main() {
-    env_logger::init();
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             list_aws_profiles,
@@ -198,7 +196,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Write;
+    use std::io::{Write, Read};
     use tempfile::tempdir;
 
     #[test]
