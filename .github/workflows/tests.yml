@@ -23,4 +23,4 @@ jobs:
 
       - name: Run Cargo Test
         run: cargo test
-        workspace: ./src-tauri
+        working-directory: src-tauri
