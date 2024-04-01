@@ -90,26 +90,31 @@ fn add_or_edit_aws_profile(profile: AwsProfile) -> Result<(), String> {
         Err(_) => return Err("Unable to find HOME directory".to_string()),
     };
 
-    let credentials_path = std::path::Path::new(&home_dir).join(".aws/credentials");
-    let mut config = Ini::new();
+    let aws_dir = std::path::Path::new(&home_dir).join(".aws");
+    let credentials_path = aws_dir.join("credentials");
 
-    if credentials_path.exists() {
-        // Load existing configuration if the file exists
-        match config.load(credentials_path.to_str().unwrap()) {
-            Ok(_) => (),
-            Err(e) => return Err(format!("Failed to load existing AWS credentials file: {}", e)),
-        }
+    // Ensure .aws directory and credentials file exist
+    if !aws_dir.exists() {
+        std::fs::create_dir_all(&aws_dir).map_err(|e| format!("Failed to create .aws directory: {}", e))?;
+    }
+    if !credentials_path.exists() {
+        std::fs::File::create(&credentials_path).map_err(|e| format!("Failed to create AWS credentials file: {}", e))?;
     }
 
-    // Set values for the specified profile
+    let mut config = Ini::new();
+    // Load existing configuration if available
+    if let Err(e) = config.load(credentials_path.to_str().unwrap()) {
+        return Err(format!("Failed to load existing AWS credentials file: {}", e));
+    }
+
+    // Remove the existing section (if any) to ensure fresh values
+    config.remove_section(&profile.profile_name);
+
+    // Set new values for the profile
     config.set(&profile.profile_name, "aws_access_key_id", Some(profile.access_key_id.to_string()));
     config.set(&profile.profile_name, "aws_secret_access_key", Some(profile.secret_access_key.to_string()));
-
     if let Some(token) = profile.session_token {
         config.set(&profile.profile_name, "aws_session_token", Some(token.to_string()));
-    } else {
-        // Ensure any existing session token is removed if not provided
-        config.set(&profile.profile_name, "aws_session_token", None);
     }
 
     // Write the updated configuration back to the file
@@ -196,101 +201,124 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::{Write, Read};
     use tempfile::tempdir;
+    use serial_test::serial;
 
     #[test]
+    #[serial]
     fn test_list_aws_profiles() {
-        // Set up a temporary directory
-        let temp = tempdir().unwrap();
-        let cred_path = temp.path().join(".aws/credentials");
+        let temp_dir = tempdir().expect("Failed to create a temp directory");
+        std::env::set_var("HOME", temp_dir.path());
 
-        // Ensure the .aws directory exists
-        std::fs::create_dir_all(cred_path.parent().unwrap()).unwrap();
-
-        // Write a mock credentials file
-        let mut file = std::fs::File::create(&cred_path).unwrap();
-        writeln!(file, "[default]\naws_access_key_id=AKIA...").unwrap();
-        writeln!(file, "[test-profile]\naws_access_key_id=AKIA...").unwrap();
-
-        // Mock the HOME environment variable
-        std::env::set_var("HOME", temp.path());
-
-        // Execute the function under test
-        let profiles = list_aws_profiles().unwrap();
-
-        // Verify the results
-        assert_eq!(profiles, vec!["default".to_string(), "test-profile".to_string()]);
-    }
-
-    #[test]
-    fn test_get_aws_profile_details() {
-        let temp = tempdir().unwrap();
-        let cred_path = temp.path().join(".aws/credentials");
-    
-        std::fs::create_dir_all(cred_path.parent().unwrap()).unwrap();
-    
-        let mut file = std::fs::File::create(&cred_path).unwrap();
-        writeln!(file, "[test-profile]").unwrap();
-        writeln!(file, "aws_access_key_id=test_access_key_id").unwrap();
-        writeln!(file, "aws_secret_access_key=test_secret_access_key").unwrap();
-        file.flush().unwrap(); // Ensure the file is flushed properly
-    
-        std::env::set_var("HOME", temp.path());
-    
-        let details = get_aws_profile_details("test-profile").unwrap();
-        assert_eq!(details.access_key_id, "test_access_key_id");
-        assert_eq!(details.secret_access_key, "test_secret_access_key");
-        assert!(details.session_token.is_none());
-    }
-
-    #[test]
-    fn test_add_or_edit_aws_profile() {
-        let temp = tempdir().unwrap();
-        let cred_path = temp.path().join(".aws/credentials");
-    
-        std::fs::create_dir_all(cred_path.parent().unwrap()).unwrap();
-    
-        // Mock the HOME environment variable to use the temporary directory
-        std::env::set_var("HOME", temp.path());
-    
-        // Create a test profile to add
+        // Create a credentials file with two profiles
+        let default_profile = AwsProfile {
+            profile_name: "tester".to_string(),
+            access_key_id: "test_access_key_id".to_string(),
+            secret_access_key: "test_secret_access_key".to_string(),
+            session_token: None,
+        };
+        assert_eq!(add_or_edit_aws_profile(default_profile.clone()).unwrap(), ());
         let test_profile = AwsProfile {
             profile_name: "test-profile".to_string(),
             access_key_id: "test_access_key_id".to_string(),
             secret_access_key: "test_secret_access_key".to_string(),
             session_token: None,
         };
+        assert_eq!(add_or_edit_aws_profile(test_profile.clone()).unwrap(), ());
+
+        // Execute the function under test
+        let profiles = list_aws_profiles().unwrap();
+
+        // Verify the results (dont care about ordering of the profiles in the vector
+        assert_eq!(profiles.len(), 2);
+        assert!(profiles.contains(&"tester".to_string()));
+        assert!(profiles.contains(&"test-profile".to_string()));
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_aws_profile_details() {
+        let temp_dir = tempdir().expect("Failed to create a temp directory");
+        std::env::set_var("HOME", temp_dir.path());
     
-        // Call the function under test to add the new profile
-        let add_result = add_or_edit_aws_profile(test_profile.clone());
-        assert!(add_result.is_ok(), "Failed to add or edit AWS profile: {:?}", add_result.err().unwrap());
+        let test_profile = AwsProfile {
+            profile_name: "test-profile".to_string(),
+            access_key_id: "12345".to_string(),
+            secret_access_key: "67890".to_string(),
+            session_token: Some("abcde".to_string()),
+        };
+        assert_eq!(add_or_edit_aws_profile(test_profile.clone()).unwrap(), ());
     
-        // Re-read the file contents after adding the profile
-        let mut file = std::fs::File::open(&cred_path).expect("Failed to open credentials file after adding profile");
-        let mut contents = String::new();
-        file.read_to_string(&mut contents).expect("Failed to read credentials file after adding profile");
-        assert!(contents.contains("[test-profile]"), "Profile section not found in file after adding");
+        let details = get_aws_profile_details("test-profile").unwrap();
+        assert_eq!(details.access_key_id, "12345");
+        assert_eq!(details.secret_access_key, "67890");
+        assert_eq!(details.session_token, Some("abcde".to_string()));
+    }
+
+    #[test]
+    #[serial]
+    fn test_add_or_edit_aws_profile() {
+        let temp_dir = tempdir().expect("Failed to create a temp directory");    
+        let aws_dir = temp_dir.path().join(".aws");
+        let credentials_path = aws_dir.join("credentials");
+        std::env::set_var("HOME", temp_dir.path());
+
+        // Initial profile addition
+        let test_profile = AwsProfile {
+            profile_name: "test-profile".to_string(),
+            access_key_id: "test_access_key_id".to_string(),
+            secret_access_key: "test_secret_access_key".to_string(),
+            session_token: None,
+        };
+        assert_eq!(add_or_edit_aws_profile(test_profile.clone()).unwrap(), ());
     
-        // Edit the existing profile
+        // Profile edition
         let edited_profile = AwsProfile {
             profile_name: "test-profile".to_string(),
-            access_key_id: "new_test_access_key_id".to_string(),
-            secret_access_key: "new_test_secret_access_key".to_string(),
-            session_token: Some("new_test_session_token".to_string()),
+            access_key_id: "edited_test_access_key_id".to_string(),
+            secret_access_key: "edited_test_secret_access_key".to_string(),
+            session_token: Some("edited_test_session_token".to_string()),
         };
+        assert_eq!(add_or_edit_aws_profile(edited_profile.clone()).unwrap(), ());
+        
+        // Load the Ini file after the edits
+        let mut config = Ini::new();
+        config.load(credentials_path.to_str().unwrap()).expect("Failed to load Ini from file after edits");
     
-        // Call the function under test to edit the existing profile
-        let edit_result = add_or_edit_aws_profile(edited_profile);
-        assert!(edit_result.is_ok(), "Failed to edit AWS profile");
+        // Verify the modifications in the Ini file
+        assert_eq!(config.get("test-profile", "aws_access_key_id"), Some("edited_test_access_key_id".to_string()), "Edited Access Key ID not present in Ini file");
+        assert_eq!(config.get("test-profile", "aws_secret_access_key"), Some("edited_test_secret_access_key".to_string()), "Edited Secret Access Key not present in Ini file");
+        assert_eq!(config.get("test-profile", "aws_session_token"), Some("edited_test_session_token".to_string()), "Edited Session Token not present in Ini file");
+    }
+
+    #[test]
+    #[serial]
+    fn test_delete_aws_profile() {
+        let temp_dir = tempdir().expect("Failed to create a temp directory");
+        std::env::set_var("HOME", temp_dir.path());
     
-        // Re-read the file contents after editing the profile
-        let mut file = std::fs::File::open(&cred_path).expect("Failed to open credentials file after editing profile");
-        contents.clear();
-        file.read_to_string(&mut contents).expect("Failed to read credentials file after editing profile");
-        assert!(contents.contains("[test-profile]"), "Profile section not found in file after editing");
-        assert!(contents.contains("aws_access_key_id=new_test_access_key_id"), "Edited Access Key ID not found in file");
-        assert!(contents.contains("aws_secret_access_key=new_test_secret_access_key"), "Edited Secret Access Key not found in file");
-        assert!(contents.contains("aws_session_token=new_test_session_token"), "Edited Session Token not found in file");
+        // Initial profile addition
+        let test_profile = AwsProfile {
+            profile_name: "test-profile".to_string(),
+            access_key_id: "test_access_key_id".to_string(),
+            secret_access_key: "test_secret_access_key".to_string(),
+            session_token: None,
+        };
+        assert_eq!(add_or_edit_aws_profile(test_profile).unwrap(), ());
+    
+        // Verify the profile is added
+        let profiles_before_deletion = list_aws_profiles().unwrap();
+        assert!(profiles_before_deletion.contains(&"test-profile".to_string()));
+    
+        // Execute the function under test
+        assert_eq!(delete_aws_profile("test-profile").unwrap(), ());
+    
+        // Verify the profile is deleted
+        let profiles_after_deletion = list_aws_profiles().unwrap();
+        assert!(!profiles_after_deletion.contains(&"test-profile".to_string()), "The profile should have been deleted.");
+    
+        // Optional: Verify by attempting to fetch deleted profile details (should fail)
+        let result = get_aws_profile_details("test-profile");
+        assert!(result.is_err(), "Fetching details for a deleted profile should fail.");
     }
 }

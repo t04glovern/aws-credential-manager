@@ -22,5 +22,5 @@ jobs:
           workspaces: './src-tauri -> target'
 
       - name: Run Cargo Test
-        run: cargo test -- --test-threads=1
+        run: cargo test
         workspace: ./src-tauri
