@@ -42,6 +42,19 @@ Add the contents of `~/.tauri/aws-credential-manager.key.pub` to your `tauri.con
 
 > **IMPORTANT**: Add the contents of `aws-credential-manager.key` a ENV variable in GitHub Secrets called `TAURI_PRIVATE_KEY`.
 
+## Tests
+
+```bash
+cargo install cargo-tarpaulin
+cd src-tauri
+
+# Tests
+cargo test
+
+# Test with Coverage
+cargo tarpaulin --out Lcov
+```
+
 ## Development
 
 > **NOTE**: It is highly recommend, and more or less required for you to run `wslg` X Server on Windows: [https://github.com/microsoft/wslg](https://github.com/microsoft/wslg). This repository is setup to use `export DISPLAY=:0` so that you can view the app when working in a devcontainer.
