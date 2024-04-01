@@ -52,7 +52,7 @@ cd src-tauri
 cargo test
 
 # Test with Coverage
-cargo tarpaulin --out Lcov
+cargo tarpaulin --out Xml
 ```
 
 ## Development
